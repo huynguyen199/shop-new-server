@@ -36,6 +36,7 @@ router.get(`/:id`, async (req, res) => {
 });
 
 router.post("/", async (req, res) => {
+  console.log("req", req.body);
   const orderItemsIds = Promise.all(
     req.body.orderItems.map(async (orderItem) => {
       let newOrderItem = new OrderItem({
@@ -55,18 +56,15 @@ router.post("/", async (req, res) => {
       const orderItem = await OrderItem.findById(orderItemId).populate(
         "product"
       );
-      console.log(
-        "🚀 ~ file: order.js ~ line 60 ~ totalPrices ~ orderItem",
-        orderItem
-      );
-
       const totalPrice = orderItem.product.price * orderItem.quantity;
       return totalPrice;
     })
   );
   const totalPrice = (await totalPrices).reduce((a, b) => a + b, 0);
-
-  console.log("total", totalPrice);
+  console.log(
+    "🚀 ~ file: order.js ~ line 64 ~ router.post ~ totalPrice",
+    totalPrice
+  );
 
   let order = new Order({
     orderItems: orderItemsIdsResolved,
@@ -77,7 +75,7 @@ router.post("/", async (req, res) => {
     country: req.body.country,
     phone: req.body.phone,
     status: req.body.status,
-    totalPrice: req.body.totalPrice,
+    totalPrice: totalPrice,
     user: req.body.user,
   });
   order = await order.save();
@@ -98,10 +96,6 @@ router.get("/get/totalsales", async (req, res) => {
       },
     },
   ]);
-  console.log(
-    "🚀 ~ file: order.js ~ line 98 ~ router.get ~ totalSales",
-    totalSales
-  );
 
   if (!totalSales) {
     return res.status(400).send("The order sales cannot be generated");
@@ -174,7 +168,7 @@ router.get(`/get/userorders/:userid`, async (req, res) => {
       },
     })
     .sort({ dateOrdered: -1 });
-    
+
   if (!userOrderList) {
     res.status(500).json({ success: false });
   }

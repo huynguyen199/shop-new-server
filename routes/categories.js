@@ -1,74 +1,71 @@
-const Category = require('../model/category');
-const express = require('express');
+const Category = require("../model/category");
+const express = require("express");
 const router = express.Router();
 
+router.get("/", async (req, res) => {
+  const categoryList = await Category.find();
 
-router.get('/', async(req, res) => {
-    const categoryList = await Category.find();
+  if (!categoryList) {
+    res.status(500).json({
+      success: false,
+    });
+  }
+  res.status(200).send(categoryList);
+});
 
-    if (!categoryList) {
-        res.status(500).json({
-            success: false
-        })
+router.put("/:id", async (req, res) => {
+  console.log("body", req.body);
+  const category = await Category.findByIdAndUpdate(
+    req.params.id,
+    {
+      name: req.body.name,
+      icon: req.body.icon,
+      color: req.body.color,
+    },
+    {
+      new: true,
     }
-    res.status(200).send(categoryList);
-})
+  );
 
+  if (!category) return res.status(400).send("the category cannot be created!");
 
-router.put('/:id', async(req, res) => {
-    console.log('body', req.body);
-    const category = await Category.findByIdAndUpdate(
-        req.params.id, {
-            name: req.body.name,
-            icon: req.body.icon,
-            color: req.body.color,
-        }, {
-            new: true
-        }
-    )
+  res.send(category);
+});
 
-    if (!category)
-        return res.status(400).send('the category cannot be created!')
+router.post("/", async (req, res) => {
+  let category = new Category({
+    name: req.body.name,
+    icon: req.body.icon,
+    color: req.body.color,
+  });
+  category = await category.save();
 
-    res.send(category);
-})
+  if (!category) return res.status(400).send("the category cannot be created!");
 
+  res.send(category);
+});
 
-router.post('/', async(req, res) => {
-    let category = new Category({
-        name: req.body.name,
-        icon: req.body.icon,
-        color: req.body.color
+router.delete("/:id", (req, res) => {
+  Category.findByIdAndRemove(req.params.id)
+    .then((category) => {
+      if (category) {
+        return res.status(200).json({
+          success: true,
+          message: "the category is deleted!",
+        });
+      } else {
+        return res.status(404).json({
+          success: false,
+          message: "category not found!",
+        });
+      }
     })
-    category = await category.save();
-
-    if (!category)
-        return res.status(400).send('the category cannot be created!')
-
-    res.send(category);
-})
-
-
-router.delete('/:id', (req, res) => {
-    Category.findByIdAndRemove(req.params.id).then(category => {
-        if (category) {
-            return res.status(200).json({
-                success: true,
-                message: 'the category is deleted!'
-            })
-        } else {
-            return res.status(404).json({
-                success: false,
-                message: "category not found!"
-            })
-        }
-    }).catch(err => {
-        return res.status(500).json({
-            success: false,
-            error: err
-        })
-    })
-})
-
+    .catch((err) => {
+      return res.status(500).json({
+        success: false,
+        error: err,
+      });
+    });
+});
 
 module.exports = router;
